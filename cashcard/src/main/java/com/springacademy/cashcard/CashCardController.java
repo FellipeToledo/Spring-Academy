@@ -23,11 +23,7 @@ public class CashCardController {
     @GetMapping("/{requestedId}")
     private ResponseEntity<CashCard> findById(@PathVariable Long requestedId) {
         Optional<CashCard> cashCardOptional = cashCardRepository.findById(requestedId);
-        if (cashCardOptional.isPresent()) {
-            return ResponseEntity.ok(cashCardOptional.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return cashCardOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -38,6 +34,11 @@ public class CashCardController {
                 .buildAndExpand(savedCashCard.id())
                 .toUri();
         return ResponseEntity.created(locationOfNewCashCard).build();
+    }
+
+    @GetMapping()
+    private ResponseEntity<Iterable<CashCard>> findAll() {
+        return ResponseEntity.ok(cashCardRepository.findAll());
     }
 
 }
