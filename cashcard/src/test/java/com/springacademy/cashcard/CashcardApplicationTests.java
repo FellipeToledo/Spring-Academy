@@ -21,22 +21,7 @@ class CashcardApplicationTests {
 	@Autowired
 	TestRestTemplate restTemplate;
 
-	@Test
-	void shouldReturnACashCardWhenDataIsSaved() {
-		ResponseEntity<String> response = restTemplate
-				.withBasicAuth("fellipe", "abc123")
-				.getForEntity("/cashcards/99", String.class);
-
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-		DocumentContext documentContext = JsonPath.parse(response.getBody());
-		Number id = documentContext.read("$.id");
-		assertThat(id).isNotNull().isEqualTo(99);
-
-		Double amount = documentContext.read("$.amount");
-		assertThat(amount).isEqualTo(123.45);
-	}
-
+	//GET
 	@Test
 	void shouldNotReturnACashCardWithAnUnknownId() {
 		ResponseEntity<String> response = restTemplate
@@ -47,7 +32,7 @@ class CashcardApplicationTests {
 		assertThat(response.getBody()).isBlank();
 	}
 
-	//POST
+	//CREATE
 	@Test
 	@DirtiesContext
 	void shouldCreateANewCashCard() {
@@ -69,6 +54,22 @@ class CashcardApplicationTests {
 
 		assertThat(id).isNotNull();
 		assertThat(amount).isEqualTo(250.00);
+	}
+
+	@Test
+	void shouldReturnACashCardWhenDataIsSaved() {
+		ResponseEntity<String> response = restTemplate
+				.withBasicAuth("fellipe", "abc123")
+				.getForEntity("/cashcards/99", String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		Number id = documentContext.read("$.id");
+		assertThat(id).isNotNull().isEqualTo(99);
+
+		Double amount = documentContext.read("$.amount");
+		assertThat(amount).isEqualTo(123.45);
 	}
 
 	//LIST
@@ -132,6 +133,15 @@ class CashcardApplicationTests {
 
 		JSONArray amounts = documentContext.read("$..amount");
 		assertThat(amounts).containsExactly(1.00, 123.45, 150.00);
+	}
+
+	//SECURITY
+	@Test
+	void shouldRejectUsersWhoAreNotCardOwners() {
+		ResponseEntity<String> response = restTemplate
+				.withBasicAuth("hank-owns-no-cards", "qrs456")
+				.getForEntity("/cashcards/99", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 	}
 }
 

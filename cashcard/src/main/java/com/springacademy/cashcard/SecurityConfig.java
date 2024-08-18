@@ -23,7 +23,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/cashcards/**")
-                        .authenticated())
+                        .hasRole("CARD-OWNER")) // enable RBAC: Replace the .authenticated() call with the hasRole(...) call.
                 .httpBasic(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable);
         return http.build();
@@ -32,12 +32,17 @@ public class SecurityConfig {
     @Bean
     UserDetailsService testOnlyUsers(PasswordEncoder passwordEncoder) {
         User.UserBuilder users = User.builder();
-        UserDetails sarah = users
+        UserDetails fellipe = users
                 .username("fellipe")
                 .password(passwordEncoder.encode("abc123"))
-                .roles() // No roles for now
+                .roles("CARD-OWNER") // new role
                 .build();
-        return new InMemoryUserDetailsManager(sarah);
+        UserDetails hankOwnsNoCards = users
+                .username("hank-owns-no-cards")
+                .password(passwordEncoder.encode("qrs456"))
+                .roles("NON-OWNER") // new role
+                .build();
+        return new InMemoryUserDetailsManager(fellipe, hankOwnsNoCards);
     }
 
     @Bean
